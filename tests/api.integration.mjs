@@ -28,9 +28,13 @@ for(const name of ['workspace','campaign','generate','channels','upload']){
  routes[name]=await import(`file://${outfile}`);
 }
 const post=(route,data,origin='https://reef.test')=>routes[route].POST(new Request(`https://reef.test/api/${route}`,{method:'POST',headers:{'Content-Type':'application/json',origin},body:JSON.stringify(data)}));
-let calls=0,posts=0,timeout=false;
+let calls=0,posts=0,timeout=false,lastMuse='';
 globalThis.fetch=async(url,options={})=>{
  calls++;
+ if(String(url)==='https://api.github.com/repos/acme/notes')return Response.json({full_name:'acme/notes',description:'Open-source note organizer',topics:['notes','productivity'],private:false});
+ if(String(url)==='https://api.github.com/repos/acme/notes/readme')return new Response('# Notes\n![build](https://ci.example/badge.svg)\nSearchable notes for small teams.');
+ if(String(url).startsWith('https://api.github.com/repos/acme/missing'))return new Response('{}',{status:404});
+ if(String(url)==='https://api.meta.ai/v1/responses'){lastMuse=String(options.body);}
  if(String(url)==='https://api.meta.ai/v1/responses')return Response.json({output:[{content:[{type:'output_text',text:JSON.stringify({brief:'A focused note organizer.',audience:'Small teams',claims:[{text:'Organizes notes',evidence:'Founder description'}],drafts:[{channel:'X',text:'Notes, organized. Try our new workspace.',rationale:'Reach makers.'},{channel:'Threads',text:'How do you keep notes organized? We built a workspace for that.',rationale:'Invite a conversation.'}]})}]}]});
  if(String(url)==='https://api.buffer.com'){
   const {query}=JSON.parse(options.body);
@@ -45,7 +49,10 @@ globalThis.reefTestHeaders=new Headers({'oai-authenticated-user-id':'owner-1','o
 response=await post('generate',{name:'Notes',description:'Organizes notes',goal:'Get feedback'});assert.equal(response.status,503);assert.equal(calls,0);
 globalThis.reefTestEnv.MODEL_API_KEY='test-fixture-only';
 response=await post('generate',{name:'Notes',description:'Organizes notes',goal:'Get feedback'});assert.equal(response.status,200);let c=await response.json();assert.equal(c.demo,false);assert.equal(c.drafts.length,3);assert.equal(c.drafts[2].channel,'Hacker News');assert.equal(c.drafts[2].text,'');
-let state=await (await routes.workspace.GET()).json();assert.equal(state.campaigns.length,1);
+response=await post('generate',{name:'Notes OSS',github:'https://github.com/acme/notes',goal:'Get feedback'});assert.equal(response.status,200);let gh=await response.json();assert.equal(gh.github,'https://github.com/acme/notes');assert.match(lastMuse,/Searchable notes for small teams/);assert.match(lastMuse,/Open-source note organizer/);assert.doesNotMatch(lastMuse,/badge\.svg/);
+response=await post('generate',{name:'Missing',github:'https://github.com/acme/missing',goal:'Get feedback'});assert.equal(response.status,400);assert.match((await response.json()).error,/not found/);
+response=await post('generate',{name:'Bad',github:'https://gitlab.com/acme/notes',goal:'Get feedback'});assert.equal(response.status,400);assert.match((await response.json()).error,/GitHub repository URL/);
+let state=await (await routes.workspace.GET()).json();assert.equal(state.campaigns.length,2);
 let d=c.drafts[0];
 response=await post('campaign',{action:'approve',id:c.id,revision:c.revision,draftId:d.id});assert.equal(response.status,200);c=await response.json();
 const approvedRevision=c.revision;

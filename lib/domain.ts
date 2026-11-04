@@ -10,7 +10,7 @@ export type Draft = {
 export type Campaign = {
   id: string; revision: number; demo: boolean; name: string; url: string;
   description: string; audience: string; goal: string; createdAt: string;
-  brief: string; claims: Claim[]; drafts: Draft[];
+  brief: string; claims: Claim[]; drafts: Draft[]; github?: string;
   events: { at: string; text: string }[]; uploadIds: string[];
 };
 export type Config = { muse: boolean; model: string; buffer: boolean; signedIn: boolean; userId: string | null };
