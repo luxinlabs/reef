@@ -1,133 +1,195 @@
-# vinext-starter
+# Reef
 
-A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
+<p align="center">
+  <img src="docs/images/reef-banner.svg" alt="Reef — Turn what you built into a launch worth sharing." width="100%" />
+</p>
 
-## Prerequisites
+<p align="center">
+  <strong>A Muse-powered launch workspace for technical founders.</strong><br />
+  Turn existing product material into a campaign you can review, refine, and share.
+</p>
 
-- Node.js `>=22.13.0`
-- Portable: Windows, macOS, or Linux; no Bash required
-- Managed Linux: managed Linux runtime with Bash, `flock`, `curl`, `sha256sum`, and GNU `timeout`
-- Git and `tar` (including Windows `tar.exe`) are required for publishing; portable publication does not require Bash
+<p align="center">
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#getting-started">Getting started</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="submission/DEMO_SLIDES.html">Demo slides</a> ·
+  <a href="submission/JUDGE_GUIDE.md">Judge guide</a>
+</p>
 
-## Sites Lifecycle
+## Overview
 
-The Sites initializer copies the shared starter and selects managed-linux only when `SITES_MANAGED_LINUX_CONTAINER=1`; otherwise it selects portable. It saves the selection only in ignored `.sites-runtime/execution-profile.json`. Both profiles copy/configure first, then use the plugin's separate `install-dependencies.mjs` step to measure installation independently. Edit source under `app/` and follow the Sites skill for installation, preview, builds, and publishing.
+Building a product and explaining it are different jobs. Reef helps independent developers and small software teams turn their website, public GitHub README, and source documents into a clear product story and launch drafts.
 
-Run `node <plugin-root>/scripts/configure-execution-profile.mjs` only when the profile is unknown for the current checkout and environment. Profile changes do not alter tracked source or require reinstalling otherwise-valid dependencies; restart an existing preview to use the new selection. Do not commit or upload `.sites-runtime/`.
+Muse Spark provides the synthesis and writing through a direct server-side Meta Model API integration. Founders inspect the result, check suggested evidence, and approve the words they want to share. Reef then opens the approved text in X or Threads, where the founder completes the post.
 
-This starter does not use `wrangler.jsonc`.
+**Status:** Hackathon prototype built for the Meta Global AI Developer Hackathon, under the **Build for Your World** theme. Connected publishing and acquisition measurement remain areas for future development.
 
-Publish archives outside the source checkout or under its ignored `outputs/` directory. Local `.env*`, `.dev.vars*`, TypeScript build state, and tool runtime directories are ignored; keep the hosting manifest, migrations, and authored scripts in source control.
+## How it works
 
-`install:ci` runs `npm ci` once against the shared lockfile, disables parent-workspace discovery, and includes required dev/optional dependencies despite production/omit settings. Sharp defaults to prebuilt binaries unless explicitly configured otherwise. Do not overlap installers.
+![Reef workflow: add product context, generate with Muse, review and approve, then share through X or Threads](docs/images/reef-workflow.svg)
 
-- **Portable:** Preserve host HOME, npm cache, registry, proxy, temporary paths, retry/concurrency settings, and lifecycle-script policy. Use `--prefer-offline --no-audit --no-fund`.
-- **Managed Linux:** Use the existing project-local HOME/cache/tmp setup and Linux install lock, tarball preflight, and timeout. Restore the image-seeded npm cache only when its lockfile hash matches; retain network fallback. Builds keep their existing timeout. These helpers are not invoked by the portable profile.
+*Brand and workflow illustrations use the website’s sky palette. They are not application screenshots.*
 
-`scripts/sites-env.mjs` preserves the caller's HOME, npm cache, proxy, XDG, and temporary-directory configuration while defaulting Wrangler and Miniflare state to the checkout. If npm reports an unwritable cache, select a writable path with `npm_config_cache` for that install. The `dev` and `start` scripts also keep Wrangler logs inside the checkout. Generated `.sites-runtime/` and `.wrangler/` directories are disposable and ignored by Git.
+1. **Bring your product.** Add a website, public GitHub repository, description, or source files. Choose a goal such as getting feedback or finding early users.
+2. **Create a launch plan.** Muse proposes a product brief, an audience, claims with source references, and drafts tailored to each channel.
+3. **Make it your own.** Review the brief, inspect suggested evidence, preview posts, and edit the wording. Approve the exact version you want to use.
+4. **Share deliberately.** Open X or Threads with approved text prefilled. Sign in on the destination platform and press Post yourself. Download campaign media to attach manually.
 
-On portable, `npm run dev` uses `vinext dev` with HMR, starting at port 5173. Vinext records the running server in ignored `.vinext/` state, rejects an ordinary duplicate launch, and recovers stale state after a stopped process; exactly simultaneous starts can race. Pass `--port <port>` or `--hostname <host>` after `npm run dev --` when needed; keep portable previews on loopback.
+## Features
 
-For managed Linux browser QA, follow the Sites skill's managed preview reference. The daemon runs the project's Vite dev script with `--host 0.0.0.0 --port 4173 --strictPort`; use the CLI's returned URL. The ignored local profile survives the daemon's cleared environment.
+| Capability | Available today |
+| --- | --- |
+| Product context | Website text, public GitHub metadata and README, source PDFs, images, and text |
+| Campaign generation | Structured product brief, audience suggestions, source references, and channel-specific drafts |
+| Draft review | Editable content, previews, and version-specific approval |
+| Social handoff | Native X and Threads text composers; optional LinkedIn drafts |
+| Launch assets | Best-effort website screenshots, private image/video storage, previews, and downloads |
+| Workspace | Saved campaigns, activity, campaign export, and a clearly labeled sample |
+| Platform-specific guidance | Human-written, manual Hacker News submission tasks |
+| Interface | Responsive sky theme, animated ASCII background, and reduced-motion support |
 
-The portable profile simulates ChatGPT sign-in only for loopback development requests. Visit `/signin-with-chatgpt?return_to=/` to sign in as `local_seedy` (`seedy@sites.test`, display name `Seedy`) and `/signout-with-chatgpt?return_to=/` to sign out. The development cookie preserves that identity across server restarts. Mock auth is disabled in the managed-linux profile and is not included in production builds; hosted authentication remains dispatch-owned.
+### Publishing and review
 
-The Worker uses `vinext/server/fetch-handler`, including Vinext's config-aware image handling. After building, `npm start` runs that Worker locally through Wrangler on `127.0.0.1`, sharing `.wrangler/state` with dev preview and local D1 migrations; it does not deploy the site or simulate sign-in. Use the URL printed by the server. Pass `npm start -- --port <port>` to select a different built-preview port.
+- **Approval does not publish.** The default workflow hands text to a platform composer. Reef does not need an in-app social account connection for this flow.
+- **Edits reset approval.** Approval belongs to a particular draft version.
+- **Source references are suggestions.** Founders must verify generated claims before sharing them.
+- **Samples stay samples.** Sample campaigns cannot be approved for publishing.
+- **Media needs a manual attachment.** Compose links carry text. Uploaded videos are stored launch assets, not transcribed or analyzed video inputs.
 
-Local previews use Miniflare's placeholder `Request.cf` metadata without a network lookup. Set `CLOUDFLARE_CF_FETCH_ENABLED=true` to opt into fetching preview metadata; this setting does not change hosted request metadata.
+An optional, owner-scoped Buffer integration can submit approved posts to a connected channel’s queue. It requires separate server configuration and is not needed for X/Threads compose handoff. Queue acceptance is distinct from confirmed publication.
 
-Local tool usage metrics are disabled by default. Set `WRANGLER_SEND_METRICS=true` to opt in.
+## Architecture
 
-## Included Shape
-
-- edit site code under `app/`
-- `app/chatgpt-auth.ts` provides optional dispatch-owned ChatGPT sign-in helpers
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `worker/index.ts` is the production Worker entrypoint and preserves request-scoped connector bindings
-- `scripts/vite/` contains the maintained Vite integrations and the vendored Sites plugin license
-- `scripts/connector-preview/` contains the local connector preview Worker and session helpers
-- the remaining `scripts/` files select execution profiles and run installation, development, and builds; the plugin's helpers orchestrate the Sites lifecycle
-- `dist/` contains generated deployment output; `.vinext/`, `.wrangler/`, and `.sites-runtime/` contain ignored local tool state
-- `db/index.ts` reads the D1 binding from the Cloudflare Worker environment
-- `db/schema.ts` starts intentionally empty
-- `@cloudflare/workers-types` provides Worker types; `cloudflare-env.d.ts` declares optional `DB`/`BUCKET` bindings—update these declarations if binding names change
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
-
-## Workspace Auth Headers
-
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
-
-The user ID is stable for the same user on the same Site and different across Sites. Use it as the durable user key; use email and name for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive `oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty `name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by `oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```mermaid
+flowchart TD
+    UI[React and TypeScript workspace] --> API[Authenticated Vinext routes on Cloudflare Workers]
+    API --> Sources[Website and public GitHub context]
+    API --> Muse[Meta Model API / Muse Spark]
+    Muse --> Validation[Zod response validation]
+    Validation --> DB[(D1: campaigns and approval state)]
+    API --> Assets[(R2: source files and launch media)]
+    DB --> Review[Founder reviews and approves a draft]
+    Review --> Compose[X or Threads composer]
+    Compose --> Post[Founder presses Post]
+    Review -. Optional configured integration .-> Buffer[Buffer publishing queue]
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+| Layer | Technology |
+| --- | --- |
+| Interface | React 19, TypeScript, Tailwind CSS, custom ASCII sky |
+| Application | Vinext with Next-compatible routes, Cloudflare Workers |
+| AI | Meta Model API Responses endpoint, Muse Spark |
+| Persistence | Cloudflare D1, Drizzle migrations, Cloudflare R2 |
+| Validation | Zod schemas and application domain rules |
+| Source and media integrations | GitHub API/README ingestion, Microlink page capture |
+| Distribution | X/Threads web composers, optional Buffer GraphQL API |
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs optional or required ChatGPT sign-in:
+Model credentials remain on the server. Campaigns and uploads are scoped to authenticated users. The optional Buffer path uses conditional database updates to guard against concurrent duplicate submissions and preserves uncertain outcomes for reconciliation.
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use the returned `userId` as the stable user key for user-owned records; do not use email as a durable identifier.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send anonymous visitors through Sign in with ChatGPT.
-- In a Server Component, start sign-in with `<a href={chatGPTSignInPath(returnTo)} target="_top">`. The auth helper module is server-only; do not import it into a Client Component.
-- Do not use `fetch`, XHR, a client-side router, or a framework link that can prefetch the sign-in route. SIWC must start as a top-level navigation.
-- Never request the AuthAPI authorization endpoint directly. The dispatch-owned `/signin-with-chatgpt` route must start the SIWC flow.
-- Use `chatGPTSignOutPath(returnTo)` for browser sign-out links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because they depend on per-request identity headers.
+## Getting started
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the OAuth cookies, and identity header injection. Do not implement app routes for those reserved paths. Routes that do not import and call the helper remain anonymous-compatible.
+### Prerequisites
 
-SIWC establishes identity only; it does not prove workspace membership. Use the Sites hosting platform's access policy controls for workspace-wide restrictions, or enforce explicit server-side membership or allowlist checks.
+- **Node.js 24 recommended** for the test suite. The package requires Node.js `>=22.13.0`.
+- npm and a local checkout of this repository.
+- A Meta Model API key for real campaign generation.
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write actions tied to the current ChatGPT user. Leave public content anonymous.
+### Install and initialize
 
-## Local D1 migrations
-
-For a D1-backed local preview, generate SQL with `npm run db:generate`. Build once through the Sites skill's build entrypoint (or `npm run build` for standalone use) to generate `dist/server/wrangler.json`, rebuilding if bindings change. From the project root, apply each pending migration in order:
+Run these commands from the repository root:
 
 ```sh
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_example.sql
+npm ci
+npm run build
 ```
 
-Replace the filename with the pending migration and `DB` with your D1 binding name if different. Use `.wrangler/state`, not `.wrangler/state/v3`; Wrangler adds the versioned directories. Do not replay migrations already applied locally. This updates only the preview database; publishing applies production migrations separately.
+Apply the initial local database migration once:
 
-## Diagnostic Commands
+```sh
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_glossy_vulcan.sql
+```
 
-- `npm run install:ci`: perform the one locked dependency install
-- `npm run dev`: start the Vite/Vinext development server
-- `npm run build`: build the deployable Sites artifact
-- `npm run start`: preview the built Worker locally with D1/R2 support
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+Create an ignored `.dev.vars` file with your server credentials:
 
-When using the Sites plugin, follow its skill instructions for installation, builds, and publishing. These npm commands remain available for standalone use.
+```dotenv
+MODEL_API_KEY=your_meta_model_api_key
+MUSE_MODEL=muse-spark-1.3
+```
 
-The portable build runs Vinext directly without a host `timeout` command. The managed-linux build uses `scripts/build-verified.sh` and its existing `SITES_BUILD_TIMEOUT` setting.
+Start the application:
 
-## Learn More
+```sh
+npm run dev
+```
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+Open the address printed by the server. For local development, visit `/signin-with-chatgpt?return_to=/` on that address to use the starter’s simulated sign-in. Hosted authentication is handled by Sites. See [DEVELOPMENT.md](DEVELOPMENT.md) for runtime, storage, and hosting details.
+
+### Configuration
+
+Use `.dev.vars` locally or the hosted runtime’s secret settings. Never commit credentials or expose them in browser code.
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `MODEL_API_KEY` | For live generation | Meta Model API credential |
+| `MUSE_MODEL` | No | Model override; defaults to `muse-spark-1.3` |
+| `GITHUB_TOKEN` | No | Public-read GitHub access with higher API rate limits |
+| `SCREENSHOT_API_KEY` | No | Microlink Pro credential; otherwise capture attempts use the public endpoint |
+| `BUFFER_API_KEY` | Only for Buffer | API publishing credential |
+| `BUFFER_OWNER_ID` | Only for Buffer | Authenticated Reef user ID authorized to use that credential |
+
+**Buffer is optional.** Leave both Buffer variables unset when using the normal X/Threads composer workflow.
+
+## Development
+
+```sh
+npm run typecheck  # TypeScript checks
+npm test           # Domain and in-process API integration tests
+npm run build      # Production build
+```
+
+The test suite covers domain and URL boundaries, authentication, campaign persistence, draft editing, stale approvals, upload ownership, and optional Buffer submission behavior. External providers are mocked in integration tests; these checks do not establish live-provider or browser verification.
+
+### Repository structure
+
+```text
+app/                 Application pages and API routes
+components/          Workspace interface
+lib/                 Domain logic, source ingestion, media, and ASCII rendering
+db/                  Database bindings and schema
+drizzle/             Database migrations
+tests/               Domain and API integration tests
+docs/images/         README illustrations
+submission/          Submission copy, demo deck, and judge materials
+```
+
+## Current scope and roadmap
+
+Reef currently supports a focused product-to-campaign workflow. It does not yet provide self-service social OAuth, autonomous publishing across all platforms, raw-video understanding, generated pitch decks, or conversion tracking.
+
+Planned directions:
+
+- Social account connections and reliable background publishing.
+- Background generation and clearer recovery from provider failures.
+- Campaign attribution and measurement of acquired users.
+- A reusable MCP interface for launching from other tools.
+
+The product’s value hypothesis is reduced effort between a working product and its first reviewed campaign. Acquisition performance and time savings have not yet been measured.
+
+## Demo and hackathon materials
+
+| Resource | Contents |
+| --- | --- |
+| [HTML demo deck](submission/DEMO_SLIDES.html) | Seven slides with speaker notes and sourced competitor pricing; download and open locally |
+| [Demo script](submission/DEMO_SCRIPT.md) | Suggested recording sequence and preparation |
+| [Judge guide](submission/JUDGE_GUIDE.md) | What to inspect and how to evaluate the prototype |
+| [Submission answers](submission/SUBMISSION.md) | Project narrative and technical implementation |
+| [Readiness checklist](submission/READINESS.md) | Remaining verification and submission assets |
+
+The HTML deck supports arrow-key navigation, **N** for notes, and **F** for fullscreen. Submission documents record the revision reviewed when they were prepared; they are not a live deployment status page.
+
+## Acknowledgments
+
+Reef uses Meta Model API, React, Vinext, Cloudflare Workers/D1/R2, Drizzle, and Zod. GitHub supplies repository context, Microlink supplies page capture, and Buffer supports the optional publishing path.
+
+The project retains [ASCII Sharks](https://github.com/stackedlol/ascii-sharks) source and its [MIT license](lib/ascii-sharks/LICENSE). The current interface uses a custom ASCII sky. Hosting infrastructure derives from the Sites/Vinext starter. Development included AI coding assistance.

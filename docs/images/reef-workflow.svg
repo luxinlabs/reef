@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="520" viewBox="0 0 1440 520" role="img" aria-labelledby="title desc">
+<title id="title">The Reef launch workflow</title><desc id="desc">Add product context, generate a campaign with Muse, review and approve a draft, then open X or Threads and post yourself. This is a workflow illustration, not an application screenshot.</desc>
+<rect width="1440" height="520" rx="24" fill="#f2f5fc"/>
+<text x="64" y="75" font-family="Georgia,serif" font-size="39" fill="#1c2242">From your product to your next conversation.</text>
+<text x="66" y="116" font-family="Arial,sans-serif" font-size="18" fill="#596184">The current product-to-campaign workflow</text>
+<path d="M90 199H1320" stroke="#b9c8e0" stroke-width="2"/>
+<g fill="#1c2242"><circle cx="90" cy="199" r="25"/><circle cx="425" cy="199" r="25"/><circle cx="760" cy="199" r="25"/><circle cx="1095" cy="199" r="25"/></g>
+<g fill="white" font-family="Arial,sans-serif" font-size="19" text-anchor="middle"><text x="90" y="206">1</text><text x="425" y="206">2</text><text x="760" y="206">3</text><text x="1095" y="206">4</text></g>
+<g fill="#1c2242" font-family="Georgia,serif" font-size="31"><text x="65" y="275">Add your product</text><text x="400" y="275">Generate with Muse</text><text x="735" y="275">Review the words</text><text x="1070" y="275">Share your launch</text></g>
+<g fill="#596184" font-family="Arial,sans-serif" font-size="21"><text x="65" y="320">Website, public GitHub</text><text x="65" y="351">README, or source files.</text><text x="400" y="320">A brief, an audience,</text><text x="400" y="351">and channel-specific drafts.</text><text x="735" y="320">Check claims, edit,</text><text x="735" y="351">and approve this version.</text><text x="1070" y="320">Open X or Threads.</text><text x="1070" y="351">You press Post.</text></g>
+<path d="M65 405H1375" stroke="#d5ddeb"/>
+<text x="65" y="455" fill="#8f620f" font-family="Arial,sans-serif" font-size="20">Approving never posts. Editing resets approval. Attach launch media in the platform composer.</text>
+</svg>
