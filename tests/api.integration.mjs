@@ -22,15 +22,16 @@ const aliases={
  'next/navigation':'export function redirect(){throw new Error("redirect");}'
 };
 const routes={};
-for(const name of ['workspace','campaign','generate','channels','upload']){
+for(const name of ['workspace','campaign','generate','channels','upload','media']){
  const outfile=path.join(out,`${name}.mjs`);
  await build({entryPoints:[`app/api/${name}/route.ts`],outfile,bundle:true,platform:'node',format:'esm',logLevel:'silent',plugins:[{name:'test-environment',setup(b){b.onResolve({filter:/^(cloudflare:workers|next\/headers|next\/navigation)$/},args=>({path:args.path,namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},args=>({contents:aliases[args.path],loader:'js'}));}}]});
  routes[name]=await import(`file://${outfile}`);
 }
 const post=(route,data,origin='https://reef.test')=>routes[route].POST(new Request(`https://reef.test/api/${route}`,{method:'POST',headers:{'Content-Type':'application/json',origin},body:JSON.stringify(data)}));
-let calls=0,posts=0,timeout=false,lastMuse='';
+let calls=0,posts=0,timeout=false,lastMuse='',shots=0,shotFail=false;
 globalThis.fetch=async(url,options={})=>{
  calls++;
+ if(String(url).startsWith('https://api.microlink.io/')){shots++;if(shotFail)return new Response('busy',{status:429});return new Response(new Uint8Array([137,80,78,71,13,10,26,10]),{headers:{'content-type':'image/png'}});}
  if(String(url)==='https://api.github.com/repos/acme/notes')return Response.json({full_name:'acme/notes',description:'Open-source note organizer',topics:['notes','productivity'],private:false});
  if(String(url)==='https://api.github.com/repos/acme/notes/readme')return new Response('# Notes\n![build](https://ci.example/badge.svg)\nSearchable notes for small teams.');
  if(String(url).startsWith('https://api.github.com/repos/acme/missing'))return new Response('{}',{status:404});
@@ -50,9 +51,16 @@ response=await post('generate',{name:'Notes',description:'Organizes notes',goal:
 globalThis.reefTestEnv.MODEL_API_KEY='test-fixture-only';
 response=await post('generate',{name:'Notes',description:'Organizes notes',goal:'Get feedback'});assert.equal(response.status,200);let c=await response.json();assert.equal(c.demo,false);assert.equal(c.drafts.length,3);assert.equal(c.drafts[2].channel,'Hacker News');assert.equal(c.drafts[2].text,'');
 response=await post('generate',{name:'Notes OSS',github:'https://github.com/acme/notes',goal:'Get feedback'});assert.equal(response.status,200);let gh=await response.json();assert.equal(gh.github,'https://github.com/acme/notes');assert.match(lastMuse,/Searchable notes for small teams/);assert.match(lastMuse,/Open-source note organizer/);assert.doesNotMatch(lastMuse,/badge\.svg/);
+assert.equal(shots,1);assert.equal(gh.media.length,1);assert.equal(gh.media[0].kind,'screenshot');
+response=await routes.media.GET(new Request(`https://reef.test/api/media?id=${gh.media[0].id}`));assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/png');
+response=await routes.media.GET(new Request(`https://reef.test/api/media?id=${gh.media[0].id}&download=1`));assert.match(response.headers.get('content-disposition'),/^attachment/);
+shotFail=true;response=await post('generate',{name:'Notes OSS 2',github:'https://github.com/acme/notes',videoUrl:'https://youtu.be/demo123',goal:'Get feedback'});assert.equal(response.status,200);let gh2=await response.json();shotFail=false;assert.deepEqual(gh2.media.map(m=>m.kind),['link']);assert.match(lastMuse,/youtu\.be\/demo123/);assert.ok(gh2.events.some(e=>/screenshot could not be captured/.test(e.text)));
+let mform=new FormData();mform.set('file',new File(['%PDF'],'deck.pdf',{type:'application/pdf'}));response=await routes.media.POST(new Request('https://reef.test/api/media',{method:'POST',headers:{origin:'https://reef.test'},body:mform}));assert.equal(response.status,400);
+mform=new FormData();mform.set('file',new File([new Uint8Array([1,2,3])],'shot.png',{type:'image/png'}));response=await routes.media.POST(new Request('https://reef.test/api/media',{method:'POST',headers:{origin:'https://reef.test'},body:mform}));assert.equal(response.status,200);const mine=await response.json();assert.equal(mine.kind,'image');
+response=await post('generate',{name:'With media',description:'Organizes notes',mediaIds:[mine.id],goal:'Get feedback'});assert.equal(response.status,200);assert.equal((await response.json()).media[0].id,mine.id);
 response=await post('generate',{name:'Missing',github:'https://github.com/acme/missing',goal:'Get feedback'});assert.equal(response.status,400);assert.match((await response.json()).error,/not found/);
 response=await post('generate',{name:'Bad',github:'https://gitlab.com/acme/notes',goal:'Get feedback'});assert.equal(response.status,400);assert.match((await response.json()).error,/GitHub repository URL/);
-let state=await (await routes.workspace.GET()).json();assert.equal(state.campaigns.length,2);
+let state=await (await routes.workspace.GET()).json();assert.equal(state.campaigns.length,4);
 let d=c.drafts[0];
 response=await post('campaign',{action:'approve',id:c.id,revision:c.revision,draftId:d.id});assert.equal(response.status,200);c=await response.json();
 const approvedRevision=c.revision;
@@ -70,7 +78,7 @@ response=await post('campaign',{action:'publish',id:uncertain.id,revision:uncert
 response=await post('campaign',{action:'approve',id:uncertain.id,revision:uncertain.revision,draftId:uncertain.drafts[0].id});assert.equal(response.status,400);
 response=await post('campaign',{action:'sample'},'https://attacker.test');assert.equal(response.status,400);
 const form=new FormData();form.set('file',new File(['Source text'], 'notes.txt',{type:'text/plain'}));response=await routes.upload.POST(new Request('https://reef.test/api/upload',{method:'POST',headers:{origin:'https://reef.test'},body:form}));assert.equal(response.status,200);const upload=await response.json();assert.ok(files.has(`owner-1/${upload.id}`));
-globalThis.reefTestHeaders=new Headers({'oai-authenticated-user-id':'owner-2','oai-authenticated-user-email':'other@example.test'});
+globalThis.reefTestHeaders=new Headers({'oai-authenticated-user-id':'owner-2','oai-authenticated-user-email':'other@example.test'});response=await routes.media.GET(new Request(`https://reef.test/api/media?id=${gh.media[0].id}`));assert.equal(response.status,404);
 state=await (await routes.workspace.GET()).json();assert.equal(state.campaigns.length,0);assert.equal(state.config.buffer,false);
 response=await post('campaign',{action:'edit',id:c.id,revision:c.revision,draftId:d.id,text:'unauthorized'});assert.equal(response.status,400);assert.match((await response.json()).error,/not found/);
 response=await post('generate',{name:'Steal source',description:'Anything',goal:'Get feedback',uploadIds:[upload.id]});assert.equal(response.status,400);assert.match((await response.json()).error,/not found/);

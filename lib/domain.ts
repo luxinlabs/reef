@@ -7,10 +7,12 @@ export type Draft = {
   version: number; approval?: { version: number; at: string; by: string };
   providerId?: string; error?: string; channelId?: string;
 };
+/** Launch media: an automatic page screenshot, founder uploads, or a demo video link. */
+export type Media = { id?: string; kind: 'screenshot' | 'image' | 'video' | 'link'; name: string; mime?: string; url?: string };
 export type Campaign = {
   id: string; revision: number; demo: boolean; name: string; url: string;
   description: string; audience: string; goal: string; createdAt: string;
-  brief: string; claims: Claim[]; drafts: Draft[]; github?: string;
+  brief: string; claims: Claim[]; drafts: Draft[]; github?: string; media?: Media[];
   events: { at: string; text: string }[]; uploadIds: string[];
 };
 export type Config = { muse: boolean; model: string; buffer: boolean; signedIn: boolean; userId: string | null };
