@@ -193,3 +193,7 @@ The HTML deck supports arrow-key navigation, **N** for notes, and **F** for full
 Reef uses Meta Model API, React, Vinext, Cloudflare Workers/D1/R2, Drizzle, and Zod. GitHub supplies repository context, Microlink supplies page capture, and Buffer supports the optional publishing path.
 
 The project retains [ASCII Sharks](https://github.com/stackedlol/ascii-sharks) source and its [MIT license](lib/ascii-sharks/LICENSE). The current interface uses a custom ASCII sky. Hosting infrastructure derives from the Sites/Vinext starter. Development included AI coding assistance.
+
+## License
+
+Reef is available under the [MIT License](LICENSE). Third-party components remain subject to their respective licenses.
